@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+root=$(git rev-parse --show-toplevel)
+python3 "$root/.ai/course-tools/.course-monitor/export.py" --stage

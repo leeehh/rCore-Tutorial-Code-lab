@@ -1,0 +1,6 @@
+{
+  "name": "rcore-session-archive",
+  "version": "0.1.0",
+  "description": "Save coding-agent conversations as local JSONL in the project.",
+  "author": { "name": "rCore Tutorial" }
+}

@@ -1,0 +1,6 @@
+# Installed at user scope, enabled only for this trusted project.
+[features]
+hooks = true
+
+[plugins."rcore-session-archive@rcore-tutorial-code"]
+enabled = true

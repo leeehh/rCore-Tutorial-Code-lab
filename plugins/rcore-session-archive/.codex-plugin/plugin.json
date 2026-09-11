@@ -1,0 +1,17 @@
+{
+  "name": "rcore-session-archive",
+  "version": "0.1.0",
+  "description": "Save coding-agent conversations as local JSONL in the project.",
+  "author": {
+    "name": "rCore Tutorial"
+  },
+  "interface": {
+    "displayName": "rCore Session Archive",
+    "shortDescription": "Save agent conversations as local JSONL.",
+    "longDescription": "Project-local JSONL archives for Codex, Claude Code, Cursor and VS Code Copilot. Choose messages, tool-calls or full content.",
+    "developerName": "rCore Tutorial",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Show me where this project saves agent session archives."
+  }
+}

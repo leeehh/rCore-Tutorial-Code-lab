@@ -1,0 +1,20 @@
+{
+  "name": "rcore-tutorial-code",
+  "interface": {
+    "displayName": "Rcore Tutorial Code"
+  },
+  "plugins": [
+    {
+      "name": "rcore-session-archive",
+      "source": {
+        "source": "local",
+        "path": "./plugins/rcore-session-archive"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

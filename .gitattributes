@@ -1,0 +1,9 @@
+.course-monitor/hooks/* text eol=lf
+.course-monitor/*.sh text eol=lf
+.course-monitor/*.cjs text eol=lf
+.course-monitor/*.json text eol=lf
+.ai/submissions/*.jsonl text eol=lf
+.course-monitor/*.vsix binary
+scripts/*.sh text eol=lf
+scripts/*.py text eol=lf
+course.py text eol=lf

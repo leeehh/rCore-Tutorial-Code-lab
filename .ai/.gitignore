@@ -1,0 +1,6 @@
+# Raw working journals stay local; pre-commit creates sanitized checkpoints.
+events/
+ide/
+!submissions/
+agent-sessions/
+course-tools/

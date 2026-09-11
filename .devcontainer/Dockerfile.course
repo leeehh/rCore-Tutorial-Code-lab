@@ -1,0 +1,3 @@
+FROM docker.cnb.cool/learningos/rcore-single
+USER root
+RUN python3 --version && git --version

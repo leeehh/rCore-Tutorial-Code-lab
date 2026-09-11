@@ -1,0 +1,8 @@
+{
+  "schema": "course-monitor-v1",
+  "enabled": true,
+  "purpose": "Teaching assistance and troubleshooting; final evaluation belongs to the instructor.",
+  "recordCodeContent": false,
+  "recordTerminalOutput": false,
+  "aiAttribution": "explicit-adapter-only"
+}

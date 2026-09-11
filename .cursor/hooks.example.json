@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeSubmitPrompt": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "afterAgentResponse": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "afterAgentThought": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "preToolUse": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "postToolUse": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "postToolUseFailure": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ],
+    "stop": [
+      { "command": "python3 \".cursor/rcore-hooks/cursor_hook.py\"" }
+    ]
+  }
+}
