@@ -1,0 +1,56 @@
+name: Jobs
+
+on: [push]
+
+env:
+  CARGO_TERM_COLOR: always
+  rust_toolchain: nightly
+
+jobs:
+  basic-test:
+    runs-on: ubuntu-latest
+    outputs:
+      points: ${{ steps.end.outputs.points}}
+    container:
+      image: alicesama/rcore-ci:2024a
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: |
+          qemu-system-riscv64 --version
+          rustup target add riscv64gc-unknown-none-elf
+          git config --global --add safe.directory /__w/${{ github.event.repository.name }}/${{ github.event.repository.name }}
+          git clone https://github.com/LearningOS/rCore-Tutorial-Checker.git ci-user
+          git clone https://github.com/LearningOS/rCore-Tutorial-Test.git ci-user/user
+          ID=`git rev-parse --abbrev-ref HEAD | grep -oP 'ch\K[0-9]'`
+          cd ci-user && make test CHAPTER=$ID passwd=${{ secrets.BASE_TEST_TOKEN }} OFFLINE=1 > ../output.txt
+          cat ../output.txt
+      - name: end
+        id: end
+        run: |
+          cat output.txt | grep "Test passed" | grep -oP "\d{1,}/\d{1,}" | xargs -i echo "points={}"
+          cat output.txt | grep "Test passed" | grep -oP "\d{1,}/\d{1,}" | xargs -i echo "points={}" >> $GITHUB_OUTPUT
+  deploy:
+    if: github.repository != 'LearningOS/rCore-Tutorial-Code'
+    name: Deploy to pages
+    needs: basic-test
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - uses: actions/checkout@v3
+        continue-on-error: true
+        with:
+          ref: 'gh-pages'
+      - name: Save Log File
+        uses: yfblock/multi-rank-log@main
+        with:
+          public-dir: classroom
+          points: ${{ needs.basic-test.outputs.points }}
+      - name: GitHub Pages
+        uses: crazy-max/ghaction-github-pages@v3
+        with:
+          target_branch: gh-pages
+          build_dir: ./classroom
+          keep_history: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
