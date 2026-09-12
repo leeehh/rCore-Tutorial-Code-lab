@@ -10,6 +10,8 @@ pub const KERNEL_STACK_SIZE: usize = 4096 * 2;
 pub const KERNEL_HEAP_SIZE: usize = 0x20000;
 /// the max number of apps
 pub const MAX_APP_NUM: usize = 16;
+/// 系统调用计数数组的长度，覆盖当前支持的编号 0..=410。
+pub const MAX_SYSCALL_NUM: usize = 411;
 /// base_addr(changed) of app
 pub const APP_BASE_ADDRESS: usize = 0x80400000;
 /// size limit of app
