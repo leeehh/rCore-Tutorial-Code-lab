@@ -28,11 +28,14 @@ const SYSCALL_TRACE: usize = 410;
 mod fs;
 mod process;
 
+use crate::task::record_current_syscall;
 use fs::*;
 use process::*;
 
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 3]) -> isize {
+    // 分发前计数，包含本次 sys_trace，也覆盖切换任务或不返回的调用。
+    record_current_syscall(syscall_id);
     match syscall_id {
         SYSCALL_WRITE => sys_write(args[0], args[1] as *const u8, args[2]),
         SYSCALL_EXIT => sys_exit(args[0] as i32),

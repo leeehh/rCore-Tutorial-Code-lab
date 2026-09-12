@@ -1,6 +1,6 @@
 //! Implementation of [`PageTableEntry`] and [`PageTable`].
 
-use super::{frame_alloc, FrameTracker, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
+use super::{frame_alloc, FrameTracker, PhysAddr, PhysPageNum, StepByOne, VirtAddr, VirtPageNum};
 use alloc::vec;
 use alloc::vec::Vec;
 use bitflags::*;
@@ -78,7 +78,7 @@ pub struct PageTable {
     frames: Vec<FrameTracker>,
 }
 
-/// Assume that it won't oom when creating/mapping.
+/// 页表创建与查询；建立映射时通过 Option 传递物理页分配失败。
 impl PageTable {
     /// Create a new page table
     pub fn new() -> Self {
@@ -107,7 +107,8 @@ impl PageTable {
                 break;
             }
             if !pte.is_valid() {
-                let frame = frame_alloc().unwrap();
+                // 中间页表也需要物理页，分配失败时交给调用者处理。
+                let frame = frame_alloc()?;
                 *pte = PageTableEntry::new(frame.ppn, PTEFlags::V);
                 self.frames.push(frame);
             }
@@ -133,12 +134,15 @@ impl PageTable {
         }
         result
     }
-    /// set the map between virtual page number and physical page number
+    /// 建立虚拟页到物理页的映射，分配失败或映射冲突时返回 None。
     #[allow(unused)]
-    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) {
-        let pte = self.find_pte_create(vpn).unwrap();
-        assert!(!pte.is_valid(), "vpn {:?} is mapped before mapping", vpn);
+    pub fn map(&mut self, vpn: VirtPageNum, ppn: PhysPageNum, flags: PTEFlags) -> Option<()> {
+        let pte = self.find_pte_create(vpn)?;
+        if pte.is_valid() {
+            return None;
+        }
         *pte = PageTableEntry::new(ppn, flags | PTEFlags::V);
+        Some(())
     }
     /// remove the map between virtual page number and physical page number
     #[allow(unused)]
@@ -151,6 +155,23 @@ impl PageTable {
     pub fn translate(&self, vpn: VirtPageNum) -> Option<PageTableEntry> {
         self.find_pte(vpn).map(|pte| *pte)
     }
+
+    /// 按用户访问权限查询地址，返回包含页内偏移的物理地址。
+    pub fn translate_user(&self, addr: usize, permission: PTEFlags) -> Option<PhysAddr> {
+        let va = VirtAddr::from(addr);
+        // VirtAddr 会截断高位，先通过往返转换排除不符合 Sv39 格式的地址。
+        if usize::from(va) != addr {
+            return None;
+        }
+        let pte = self.translate(va.floor())?;
+        // 找到末级页表项不代表映射有效，还需检查 V、U 和本次访问权限。
+        if !pte.flags().contains(PTEFlags::V | PTEFlags::U | permission) {
+            return None;
+        }
+        let page_base = PhysAddr::from(pte.ppn());
+        Some(PhysAddr(page_base.0 + va.page_offset()))
+    }
+
     /// get the token from the page table
     pub fn token(&self) -> usize {
         8usize << 60 | self.root_ppn.0

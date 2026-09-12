@@ -15,6 +15,7 @@ mod switch;
 mod task;
 
 use crate::loader::{get_app_data, get_num_app};
+use crate::mm::{MapPermission, VirtAddr};
 use crate::sync::UPSafeCell;
 use crate::trap::TrapContext;
 use alloc::vec::Vec;
@@ -126,6 +127,25 @@ impl TaskManager {
         inner.tasks[inner.current_task].get_trap_cx()
     }
 
+    /// 定位当前任务并申请匿名映射，返回时释放任务管理器的借用。
+    fn mmap_current(
+        &self,
+        start: VirtAddr,
+        end: VirtAddr,
+        permission: MapPermission,
+    ) -> Option<()> {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].mmap(start, end, permission)
+    }
+
+    /// 定位当前任务并取消映射，借用仅在本次操作期间持有。
+    fn munmap_current(&self, start: VirtAddr, end: VirtAddr) -> Option<()> {
+        let mut inner = self.inner.exclusive_access();
+        let current = inner.current_task;
+        inner.tasks[current].munmap(start, end)
+    }
+
     /// Change the current 'Running' task's program break
     pub fn change_current_program_brk(&self, size: i32) -> Option<usize> {
         let mut inner = self.inner.exclusive_access();
@@ -153,6 +173,26 @@ impl TaskManager {
             panic!("All applications completed!");
         }
     }
+}
+
+/// 记录当前任务的一次系统调用，返回时释放借用，供后续查询或调度使用。
+pub fn record_current_syscall(syscall_id: usize) {
+    let mut inner = TASK_MANAGER.inner.exclusive_access();
+    let current = inner.current_task;
+    // 超出数组范围的调用号交给系统调用分发入口处理。
+    if let Some(count) = inner.tasks[current].syscall_counts.get_mut(syscall_id) {
+        *count += 1;
+    }
+}
+
+/// 查询当前任务的系统调用次数，超出统计范围的编号返回零。
+pub fn current_syscall_count(syscall_id: usize) -> usize {
+    let inner = TASK_MANAGER.inner.exclusive_access();
+    inner.tasks[inner.current_task]
+        .syscall_counts
+        .get(syscall_id)
+        .copied()
+        .unwrap_or(0)
 }
 
 /// Run the first task in task list.
@@ -196,6 +236,16 @@ pub fn current_user_token() -> usize {
 /// Get the current 'Running' task's trap contexts.
 pub fn current_trap_cx() -> &'static mut TrapContext {
     TASK_MANAGER.get_current_trap_cx()
+}
+
+/// 向系统调用层提供当前任务的匿名映射接口。
+pub fn mmap_current_task(start: VirtAddr, end: VirtAddr, permission: MapPermission) -> Option<()> {
+    TASK_MANAGER.mmap_current(start, end, permission)
+}
+
+/// 向系统调用层提供当前任务的取消映射接口。
+pub fn munmap_current_task(start: VirtAddr, end: VirtAddr) -> Option<()> {
+    TASK_MANAGER.munmap_current(start, end)
 }
 
 /// Change the current 'Running' task's program break
